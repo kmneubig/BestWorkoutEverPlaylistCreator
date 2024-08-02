@@ -1,30 +1,26 @@
 import { Flex, Text } from "@chakra-ui/react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import NavBar from "../../components/Navbar/Navbar";
 import { Login } from "../../components/Login";
 import { routes } from "../../routes";
 import { GridItm, GridStyled, NavLinkItem } from "./HomeElements";
+import { useGetToken } from "../../hooks/useGetToken";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
+
+function useHome() {
+  const { data } = useCurrentUser();
+  return { currentUser: data };
+}
 
 export function Home() {
+  const { currentUser } = useHome();
   const [token, setToken] = useState<string | null>("");
-  console.log(token);
+
+  const accessToken = useGetToken();
   useEffect(() => {
-    const hash = window.location.hash;
-    let token = window.localStorage.getItem("token");
-    const accessToken = hash
-      .substring(1)
-      .split("&")
-      .find((elem) => elem.startsWith("access_token"));
-
-    if (!token && accessToken && hash) {
-      token = accessToken.split("=")[1];
-      window.location.hash = "";
-      window.localStorage.setItem("token", token);
-    }
-
-    setToken(token);
-  }, []);
+    setToken(accessToken);
+  }, [accessToken]);
 
   const logout = () => {
     setToken("");
@@ -44,7 +40,10 @@ export function Home() {
             paddingTop="15rem"
             gap="5rem"
           >
-            <Text>First select the type of exercise to build the playlist</Text>
+            <Text>
+              Hello, {currentUser?.display_name}! First select the type of
+              exercise to build the playlist
+            </Text>
             <GridStyled templateColumns="50% 50%">
               {routes
                 .filter((route) => route.isExercise)

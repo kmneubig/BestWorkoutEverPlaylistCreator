@@ -2,8 +2,7 @@ import { Button, Flex } from "@chakra-ui/react";
 
 import Logo from "./Logo";
 import MenuItem from "./MenuItem";
-
-type NavbarType = { logout: () => void };
+import { NavbarType } from "../../types/NavbarType";
 
 function NavBar(props: NavbarType) {
   return (

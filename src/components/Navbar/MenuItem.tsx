@@ -1,10 +1,5 @@
 import { Link, Text } from "@chakra-ui/react";
-
-type MenuItemType = {
-  children: string;
-  isLast?: boolean;
-  to: string;
-};
+import { MenuItemType } from "../../types/NavbarType";
 
 export default function MenuItem(props: MenuItemType) {
   return (

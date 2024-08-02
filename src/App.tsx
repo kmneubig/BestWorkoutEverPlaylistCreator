@@ -12,6 +12,7 @@ import { extendTheme } from "@chakra-ui/react";
 import { RootLayout } from "./layouts";
 import { routes } from "./routes";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { CurrentUserContext, useCurrentUser } from "./hooks/useCurrentUser";
 
 // 2. Extend the theme to include custom colors, fonts, etc
 const theme = extendTheme({
@@ -60,7 +61,12 @@ function AppComponent() {
 }
 
 function App() {
-  return <AppComponent />;
+  const currentUserContexValue = useCurrentUser();
+  return (
+    <CurrentUserContext.Provider value={currentUserContexValue}>
+      <AppComponent />
+    </CurrentUserContext.Provider>
+  );
 }
 
 export default App;

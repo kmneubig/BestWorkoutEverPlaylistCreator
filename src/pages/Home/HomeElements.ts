@@ -5,8 +5,8 @@ import { NavLink } from "react-router-dom";
 export const GridStyled = styled(Grid)`
   p: 1rem;
   gap: 2rem;
-  max-width: 40%;
-  min-width: 40%;
+  max-width: 45%;
+  min-width: 45%;
 `;
 
 export const GridItm = styled(GridItem)`

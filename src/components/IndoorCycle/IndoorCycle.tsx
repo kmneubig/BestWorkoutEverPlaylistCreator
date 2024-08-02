@@ -1,104 +1,99 @@
-import { Button, Flex, Image, Input, Stack } from "@chakra-ui/react";
+import { Button, Flex, Heading, Stack } from "@chakra-ui/react";
 import { useState } from "react";
 import NavBar from "../Navbar/Navbar";
-import { SubmitHandler, useForm } from "react-hook-form";
-
-type ArtistType = {
-  artists: {
-    href: string;
-    items: ArtistItemsType[];
-    limit: number;
-    next: string;
-    offset: number;
-    previous: string;
-    total: number;
-  };
-};
-
-type ArtistItemsType = {
-  external_urls: { spotify: string };
-  followers: { href: string; total: number };
-  genres: string[];
-  href: string;
-  id: string;
-  images: { url: string; height: number; width: number }[];
-  name: string;
-  popularity: number;
-  type: string;
-  uri: string;
-};
-
-type Inputs = {
-  searchKey: string;
-};
-
-async function searchArtists(searchKey: string, token: string | null) {
-  try {
-    const response = await fetch(
-      "https://api.spotify.com/v1/search?" +
-        new URLSearchParams({ q: searchKey, type: "artist" }).toString(),
-      { method: "GET", headers: { Authorization: `Bearer ${token}` } }
-    );
-    if (!response.ok) {
-      throw new Error(`Response status: ${response.status}`);
-    }
-    return await response.json();
-  } catch (error) {
-    console.log("Error with searching for the artists");
-  }
-}
+//import { useCurrentUser } from "../../hooks/useCurrentUser";
+import { PlaylistItemsTypes, PlaylistType } from "../../types/PlaylistType";
+import { CreatePlaylistModal } from "./CreatePlaylistModal";
+import { useFetchPlaylist } from "../../hooks/useFetchPlaylist";
+import { AddSongModal } from "./AddSongModal";
+import { ArtistSearchModal } from "../ArtistSearchModal";
+import { ArtistType } from "../../types/ArtistType";
+import { DisplayArtist } from "../DisplayArtist";
+import { useFetchPlaylistItems } from "../../hooks/useFetchPlaylistItems";
 
 const logout = () => {
   //setToken("");
   window.localStorage.removeItem("token");
 };
 
+/*function useIndoorCycle() {
+  const { data } = useCurrentUser();
+  return { currentUser: data };
+}*/
+
 export function IndoorCycle() {
-  const form = useForm<Inputs>();
+  //const { currentUser } = useIndoorCycle();
+  const [activePlaylist, setActivePlaylist] = useState<PlaylistType>();
+  const [recommendedSongs, setRecommendedSongs] =
+    useState<PlaylistItemsTypes>();
+  const [fetchPlaylist] = useFetchPlaylist();
   const [artists, setArtists] = useState<ArtistType>();
+  const [fetchPlaylistItems] = useFetchPlaylistItems();
 
-  const token = window.localStorage.getItem("token");
-  console.log(token);
+  async function handleCreateNewPlaylist(playlistId: string) {
+    const response = await fetchPlaylist(playlistId);
+    setActivePlaylist(response);
+  }
 
-  const handleSubmit: SubmitHandler<Inputs> = async (data) => {
-    const response = await searchArtists(data.searchKey, token);
-    console.log(response);
-    setArtists(response);
-  };
+  async function handleOnAdd() {
+    if (activePlaylist) {
+      const response = await fetchPlaylistItems(activePlaylist.id);
+      setRecommendedSongs(response);
+      console.log("handle on add: " + response.items[0].track.name);
+    }
+  }
+
+  function handleOnSearch(data: ArtistType) {
+    setArtists(data);
+  }
 
   return (
-    <Flex direction="column">
+    <>
       <NavBar logout={logout} />
-      <Flex justifyContent="center" paddingTop="8rem">
-        Enter the playlist theme and the BPM requirements for each song below:
-      </Flex>
-      <Flex
-        direction="column"
-        gap="3rem"
-        paddingTop="15rem"
-        alignItems="center"
-      >
-        <form onSubmit={form.handleSubmit(handleSubmit)}>
-          <Stack>
-            <Input defaultValue="" {...form.register("searchKey")} />
-            <Button backgroundColor="#6f4985" color="white" type="submit">
-              Search
-            </Button>
-          </Stack>
-        </form>
+      {!activePlaylist && (
+        <>
+          <Flex paddingTop="20rem" justifyContent="center">
+            Click a button below to create a new playlist or edit an existing
+            one:
+          </Flex>
+          <Flex margin="5rem" gap="5rem" justifyContent="center">
+            <CreatePlaylistModal onCreate={handleCreateNewPlaylist} />
+            <Button width="15rem">Edit an existing playlist</Button>
+          </Flex>
+        </>
+      )}
+      {activePlaylist && (
+        <Flex
+          direction="column"
+          paddingTop="8rem"
+          gap="4rem"
+          alignItems="center"
+        >
+          <Heading>{activePlaylist.name}</Heading>
 
-        {artists &&
-          artists.artists.items.map((artist) => (
-            <Flex key={artist.id}>
-              {artist.images.length ? (
-                <Image src={artist.images[0].url} alt="" />
-              ) : (
-                <div>No Image</div>
-              )}
-              {artist.name}
-            </Flex>
-          ))}
-      </Flex>
-    </Flex>
+          {artists && <DisplayArtist artists={artists.artists} />}
+
+          <Stack>
+            <ArtistSearchModal onSearch={handleOnSearch} />
+            {artists && (
+              <AddSongModal
+                onAdd={handleOnAdd}
+                playlistId={activePlaylist.id}
+                seed_artists={artists.artists.items[0].id}
+                theme_type={"artist"}
+              />
+            )}
+          </Stack>
+          {recommendedSongs &&
+            recommendedSongs.items.map((item, index) => {
+              return (
+                <Flex color="white" key={index}>
+                  Song {index + 1}: {item.track.name}
+                </Flex>
+              );
+            })}
+        </Flex>
+      )}
+    </>
   );
 }
